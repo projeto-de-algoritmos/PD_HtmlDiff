@@ -66,7 +66,6 @@ def find_lcs_string(text1, text2):
   i = len(text1)
   j = len(text2)
   while i != 0 or j != 0:
-    print(f"{i} {j}")
     #Quando uma das strings acabam, adicione a outra como adição ou subtração
     if i == 0:
       results.append(Addition(text2[j - 1]))

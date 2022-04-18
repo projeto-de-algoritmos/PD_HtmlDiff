@@ -1,5 +1,11 @@
+import re
 from dataclasses import dataclass
 import webbrowser
+import requests
+from lxml import html
+from lxml.html.clean import Cleaner
+
+cleaner = Cleaner(page_structure=True, javascript=True, comments=True, style=True)
 
 
 @dataclass
@@ -31,26 +37,25 @@ def createFile(content):
     file.close();
 
 def openFileInBrowser():
-  print("Se nada acontecer, mude o caminho do arquivo no método 'openFileInBrowser'");
   filename = '/Users/albino/Documents/unb/htmlDiff/result.html'
   webbrowser.open_new_tab(filename)
 
 def get_lcs_len(text1, text2):
-    n = len(text1)
-    m = len(text2)
+  print("Montando matriz LCS")
+  n = len(text1)
+  m = len(text2)
 
-    lcs = [[None for _ in range(m+1)] for _ in range(n+1)]; # inicia uma matrix mxn vazia
+  lcs = [[None for _ in range(m+1)] for _ in range(n+1)]; # inicia uma matrix mxn vazia
 
-    for i in range(0, n+1):
-        for j in range(0, m+1):
-            if i == 0 or j == 0:
-                lcs[i][j] = 0
-            elif text1[i-1] == text2[j-1]:
-                lcs[i][j] = 1 + lcs[i-1][j-1]
-            else:
-                lcs[i][j] = max(lcs[i-1][j], lcs[i][j-1])
-
-    return lcs
+  for i in range(0, n+1):
+    for j in range(0, m+1):
+      if i == 0 or j == 0:
+        lcs[i][j] = 0
+      elif text1[i-1] == text2[j-1]:
+        lcs[i][j] = 1 + lcs[i-1][j-1]
+      else:
+        lcs[i][j] = max(lcs[i-1][j], lcs[i][j-1])
+  return lcs
 
 def find_lcs_string(text1, text2):
   result = ""
@@ -60,8 +65,8 @@ def find_lcs_string(text1, text2):
 
   i = len(text1)
   j = len(text2)
-
   while i != 0 or j != 0:
+    print(f"{i} {j}")
     #Quando uma das strings acabam, adicione a outra como adição ou subtração
     if i == 0:
       results.append(Addition(text2[j - 1]))
@@ -99,12 +104,22 @@ def diffToHtml(diff):
     else:
       diffHtml += char.value
   if len(diffHtml) > 0:
-    diffHtml += "</div>"
+    diffHtml += "</dbiv>"
   css = "<style>.diff > div{border: solid #333;border-width: 1px 1px 0px 1px; line-heigth: 18px} .diff{border-bottom: 1px solid black;}.Addition{background: green}.Addition::before{content:' + '}.Removal{background: red}.Removal::before{content:' - ';font-size:18px}.Unchanged{background: #888}</style>"
-  html = f"<html><head>{css}</head><body><div class=\"diff\">{diffHtml}</div></body></html>"
+  html = f"<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">/{css}</head><body><div class=\"diff\">{diffHtml}</div></body></html>"
   return html
 
-diff = find_lcs_string("asdfaaa", "afdsbaa")
+page1 = input('Insira a primeira url: ')
+page2 = input('Insira a segunda url: ')
+
+def sanitize(htmlString):
+  document = html.fromstring(htmlString)
+  html_cleaned = cleaner.clean_html(document).text_content().strip()
+  return re.sub('\s+',' ',html_cleaned)
+
+page1Html = sanitize(requests.get(page1).text)
+page2Html = sanitize(requests.get(page2).text)
+print("Obtido duas paginas de tamanhos " + str(len(page1Html)) + ' e ' + str(len(re.sub('\s+',' ', page1Html))))
+diff = find_lcs_string(page1Html, page2Html)
 htmlContent = diffToHtml(diff)
 createFile(htmlContent)
-openFileInBrowser()

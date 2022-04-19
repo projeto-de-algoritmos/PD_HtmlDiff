@@ -118,7 +118,6 @@ def sanitize(htmlString):
 
 page1Html = sanitize(requests.get(page1).text)
 page2Html = sanitize(requests.get(page2).text)
-print("Obtido duas paginas de tamanhos " + str(len(page1Html)) + ' e ' + str(len(re.sub('\s+',' ', page1Html))))
 diff = find_lcs_string(page1Html, page2Html)
 htmlContent = diffToHtml(diff)
 createFile(htmlContent)
